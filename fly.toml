@@ -1,0 +1,27 @@
+app = "tekshiruv-bot-azamat"
+primary_region = "fra"
+
+[build]
+
+[env]
+  BOT_TOKEN = "8780241869:AAHjmdDSqUSCRiCLHAguEDUIhOot6mjSGvY"
+  OWNER_ID = "8420258761"
+  DATABASE_URL = "sqlite+aiosqlite:///storage/test_platform.db"
+  PYTHONUNBUFFERED = "1"
+  PORT = "8080"
+
+[mounts]
+  source = "bot_storage"
+  destination = "/app/storage"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1
