@@ -55,16 +55,32 @@ async def health_check(request):
 
 
 async def start_health_server():
-    port = int(os.environ.get("PORT", 8080))
+    ports_to_try = set()
+    if os.environ.get("PORT"):
+        try:
+            ports_to_try.add(int(os.environ["PORT"]))
+        except ValueError:
+            pass
+    ports_to_try.add(8080)
+    ports_to_try.add(10000)
+
     app_web = web.Application()
     app_web.router.add_get("/", health_check)
     app_web.router.add_get("/health", health_check)
     runner = web.AppRunner(app_web)
     await runner.setup()
-    site = web.TCPSite(runner, "0.0.0.0", port)
-    await site.start()
-    logger.info(f"Health check web server running on port {port}")
-    return runner
+
+    started_any = False
+    for p in sorted(ports_to_try):
+        try:
+            site = web.TCPSite(runner, "0.0.0.0", p)
+            await site.start()
+            logger.info(f"Health check web server active on 0.0.0.0:{p}")
+            started_any = True
+        except Exception as err:
+            logger.warning(f"Could not bind to port {p}: {err}")
+            
+    return runner if started_any else None
 
 
 async def main():
