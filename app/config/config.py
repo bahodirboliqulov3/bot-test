@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     OWNER_ID: int = Field(..., description="Initial owner telegram ID")
 
     DATABASE_URL: str = Field(
-        default="postgresql+asyncpg://postgres:postgres@localhost:5432/test_platform_db",
+        default="sqlite+aiosqlite:///./storage/test_platform.db",
         description="Async SQLAlchemy database URL"
     )
     REDIS_URL: str = Field(
