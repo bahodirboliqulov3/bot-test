@@ -108,21 +108,22 @@ async def main():
 
     # 7. Start Polling with Auto-Reconnect Resilience
     logger.info("Bot is polling with instant update resolution...")
-    while True:
-        try:
-            await bot.delete_webhook(drop_pending_updates=True)
-            await dp.start_polling(
-                bot,
-                allowed_updates=["message", "callback_query", "chat_member", "my_chat_member", "inline_query"],
-                polling_timeout=15
-            )
-            break
-        except (KeyboardInterrupt, SystemExit):
-            logger.info("Polling stopped by user or system signal.")
-            break
-        except Exception as e:
-            logger.error(f"Polling interrupted by error (auto-reconnecting in 5s): {e}", exc_info=True)
-            await asyncio.sleep(5)
+    try:
+        while True:
+            try:
+                await bot.delete_webhook(drop_pending_updates=True)
+                await dp.start_polling(
+                    bot,
+                    allowed_updates=["message", "callback_query", "chat_member", "my_chat_member", "inline_query"],
+                    polling_timeout=15
+                )
+                break
+            except (KeyboardInterrupt, SystemExit):
+                logger.info("Polling stopped by user or system signal.")
+                break
+            except Exception as e:
+                logger.error(f"Polling interrupted by error (auto-reconnecting in 5s): {e}", exc_info=True)
+                await asyncio.sleep(5)
     finally:
         scheduler_task.cancel()
         if web_runner:
