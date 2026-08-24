@@ -70,7 +70,14 @@ async def start_health_server():
 async def main():
     logger.info("Starting Telegram Test Platform Bot with Turbo Optimization...")
 
-    # Persistent Storage
+    # 1. Start HTTP Health Server for Render / Cloud immediately so health checks pass
+    web_runner = None
+    try:
+        web_runner = await start_health_server()
+    except Exception as e:
+        logger.warning(f"Could not start health web server on port (not critical): {e}")
+
+    # 2. Persistent Storage
     storage = PersistentFSMStorage()
 
     bot = Bot(
@@ -80,30 +87,26 @@ async def main():
 
     dp = Dispatcher(storage=storage)
 
-    # Initialize Database Schema
-    await create_tables()
+    # 3. Initialize Database Schema
+    try:
+        await create_tables()
+    except Exception as e:
+        logger.error(f"Database initialization error: {e}", exc_info=True)
 
-    # Register Middlewares
+    # 4. Register Middlewares
     dp.update.middleware(ErrorMiddleware())
     dp.update.middleware(ThrottlingMiddleware(rate_limit=0.35))
     dp.update.middleware(DatabaseMiddleware())
     dp.update.middleware(AuthMiddleware(cache_ttl=120))
     dp.update.middleware(RequiredChannelMiddleware())
 
-    # Include Main Routers
+    # 5. Include Main Routers
     dp.include_router(main_router)
 
-    # Launch Background Scheduler
+    # 6. Launch Background Scheduler
     scheduler_task = asyncio.create_task(SchedulerService.start_scheduler_loop(bot, interval_seconds=30))
 
-    # Start HTTP Health Server for Render / Cloud (if PORT or web requested)
-    web_runner = None
-    try:
-        web_runner = await start_health_server()
-    except Exception as e:
-        logger.warning(f"Could not start local web server on port (not critical): {e}")
-
-    # Start Polling
+    # 7. Start Polling
     logger.info("Bot is polling with instant update resolution...")
     try:
         await bot.delete_webhook(drop_pending_updates=True)
@@ -112,18 +115,31 @@ async def main():
             allowed_updates=["message", "callback_query", "chat_member", "my_chat_member", "inline_query"],
             polling_timeout=15
         )
+    except Exception as e:
+        logger.critical(f"Unhandled error in polling: {e}", exc_info=True)
     finally:
         scheduler_task.cancel()
         if web_runner:
-            await web_runner.cleanup()
-        await storage.close()
-        await bot.session.close()
-        await engine.dispose()
+            try:
+                await web_runner.cleanup()
+            except Exception:
+                pass
+        try:
+            await storage.close()
+            await bot.session.close()
+            await engine.dispose()
+        except Exception:
+            pass
         logger.info("Bot stopped.")
 
 
 if __name__ == "__main__":
+    import traceback
     try:
         asyncio.run(main())
     except (KeyboardInterrupt, SystemExit):
         logger.info("Bot process exited.")
+    except Exception as e:
+        logger.critical(f"FATAL BOT CRASH: {e}")
+        traceback.print_exc()
+        sys.exit(1)
