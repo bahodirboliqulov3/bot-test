@@ -1,4 +1,4 @@
-from aiogram import F, Router
+from aiogram import Bot, F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -44,41 +44,117 @@ async def start_add_channel(callback: CallbackQuery, state: FSMContext):
     )
 
 
+from app.services.channel_service import ChannelService
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 @router.message(AdminChannelState.waiting_for_title)
 async def process_channel_title(message: Message, state: FSMContext):
     await state.update_data(title=message.text.strip())
     await state.set_state(AdminChannelState.waiting_for_channel_id)
     await message.answer(
-        "Kanal ID yoki @username kiriting:\n(Masalan: -1001234567890 yoki @mening_kanalim):",
-        reply_markup=get_cancel_keyboard()
+        "Kanal ID yoki @username kiriting:\n(Masalan: <code>@mening_kanalim</code> yoki <code>-1001234567890</code>):",
+        reply_markup=get_cancel_keyboard(),
+        parse_mode="HTML"
     )
 
 
 @router.message(AdminChannelState.waiting_for_channel_id)
-async def process_channel_id(message: Message, state: FSMContext):
-    await state.update_data(channel_id=message.text.strip())
-    await state.set_state(AdminChannelState.waiting_for_invite_link)
-    await message.answer(
-        "Kanalga a'zo bo'lish havolasini (link) kiriting:\n(Masalan: https://t.me/mening_kanalim):",
-        reply_markup=get_cancel_keyboard()
-    )
+async def process_channel_id(message: Message, state: FSMContext, bot: Bot):
+    raw_input = message.text.strip()
+    norm_id = ChannelService.normalize_channel_id(raw_input)
+    
+    # Telegram orqali jonli tekshirish
+    try:
+        chat = await bot.get_chat(norm_id)
+        bot_user = await bot.get_me()
+        bot_member = await bot.get_chat_member(chat.id, bot_user.id)
+        
+        if bot_member.status not in ["administrator", "creator"]:
+            await message.answer(
+                f"⚠️ <b>Bot \"{chat.title}\" kanalida ADMIN emas!</b>\n\n"
+                f"Iltimos, avval @{bot_user.username} ni kanalingizga qo‘shib, unga <b>Adminlik huquqini</b> bering, so‘ng qaytadan yuboring.",
+                reply_markup=get_cancel_keyboard(),
+                parse_mode="HTML"
+            )
+            return
+
+        # Bot kanalda admin ekanligi tasdiqlandi!
+        auto_title = chat.title
+        auto_link = f"https://t.me/{chat.username}" if chat.username else None
+        
+        data = await state.get_data()
+        final_title = data.get("title") or auto_title
+
+        await state.update_data(
+            channel_id=str(chat.id) if not chat.username else f"@{chat.username}",
+            title=final_title,
+            invite_link=auto_link
+        )
+        
+        if auto_link:
+            await state.set_state(AdminChannelState.waiting_for_invite_link)
+            await message.answer(
+                f"✅ <b>Kanal topildi va bot adminligi tasdiqlandi!</b>\n\n"
+                f"📢 Nomi: <b>{final_title}</b>\n"
+                f"🆔 ID: <code>{chat.id}</code>\n"
+                f"🔗 Havola: <code>{auto_link}</code>\n\n"
+                f"Ushbu havola ma'qul bo'lsa <b>\"Ha\"</b> yoki <b>\"Tayyor\"</b> deb yozing, yoki boshqa taklif havolasini kiriting:",
+                reply_markup=get_cancel_keyboard(),
+                parse_mode="HTML"
+            )
+        else:
+            await state.set_state(AdminChannelState.waiting_for_invite_link)
+            await message.answer(
+                f"✅ <b>Kanal topildi: {final_title}</b> (Yopiq/Private kanal)\n\n"
+                "Kanalga a'zo bo'lish havolasini (invite link) kiriting:\n(Masalan: <code>https://t.me/+AbCd...</code>)",
+                reply_markup=get_cancel_keyboard(),
+                parse_mode="HTML"
+            )
+    except Exception as e:
+        logger.warning(f"Error validating channel {raw_input}: {e}")
+        # Agar get_chat o'xshamasa (masalan bot hali qo'shilmagan), kiritilgan ID ni qabul qilib link so'rash
+        await state.update_data(channel_id=str(norm_id))
+        await state.set_state(AdminChannelState.waiting_for_invite_link)
+        await message.answer(
+            f"ℹ️ Kanal kiritildi: <code>{norm_id}</code>\n\n"
+            "<i>(Eslatma: Bot ushbu kanalda admin bo'lishi shart!)</i>\n\n"
+            "Kanalga a'zo bo'lish havolasini (link) kiriting:\n(Masalan: https://t.me/mening_kanalim):",
+            reply_markup=get_cancel_keyboard(),
+            parse_mode="HTML"
+        )
 
 
 @router.message(AdminChannelState.waiting_for_invite_link)
 async def process_channel_link(message: Message, state: FSMContext, session: AsyncSession):
-    link = message.text.strip()
+    text_input = message.text.strip()
     data = await state.get_data()
+    
+    if text_input.lower() in ["ha", "tayyor", "ok", "+"] and data.get("invite_link"):
+        link = data["invite_link"]
+    else:
+        link = text_input
+
+    title = data.get("title") or "Kanal"
+    channel_id = str(data["channel_id"])
 
     channel_repo = ChannelRepository(session)
     await channel_repo.create(
-        title=data["title"],
-        channel_id=data["channel_id"],
+        title=title,
+        channel_id=channel_id,
         invite_link=link,
         is_active=True
     )
 
     await state.clear()
-    await message.answer(f"✅ \"{data['title']}\" kanali muvaffaqiyatli qo'shildi!", parse_mode="HTML")
+    await message.answer(
+        f"✅ <b>\"{title}\"</b> majburiy kanallar ro‘yxatiga muvaffaqiyatli qo‘shildi!\n\n"
+        f"🆔 ID: <code>{channel_id}</code>\n"
+        f"🔗 Havola: <code>{link}</code>",
+        parse_mode="HTML"
+    )
 
 
 @router.callback_query(F.data == "adm_del_channel_prompt")

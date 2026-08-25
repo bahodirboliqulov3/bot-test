@@ -502,7 +502,6 @@ async def finish_registration(message: Message, state: FSMContext, phone: str, b
 
 @router.callback_query(F.data == "check_channel_subs")
 async def check_channel_subs_callback(callback: CallbackQuery, state: FSMContext, bot: Bot, session: AsyncSession):
-    await callback.answer("✅ A’zolik tekshirilmoqda...")
     user_id = callback.from_user.id
     channel_service = ChannelService(session)
     auth_service = AuthService(session)
@@ -510,8 +509,11 @@ async def check_channel_subs_callback(callback: CallbackQuery, state: FSMContext
 
     is_subbed, unsubs = await channel_service.check_user_subscriptions(bot, user_id)
     if not is_subbed and unsubs:
-        await callback.answer("❌ Hali hamma kanallarga a’zo bo‘lmadingiz!", show_alert=True)
+        await callback.answer("❌ Hali hamma kanallarga a’zo bo‘lmadingiz!\nIltimos, avval kanallarga obuna bo‘ling.", show_alert=True)
         return
+
+    SubscriptionTracker.mark_subscribed(user_id)
+    await callback.answer("✅ Obunangiz muvaffaqiyatli tasdiqlandi!")
 
     try:
         await callback.message.delete()
