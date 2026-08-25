@@ -537,11 +537,12 @@ async def check_channel_subs_callback(callback: CallbackQuery, state: FSMContext
 
     SubscriptionTracker.mark_subscribed(user_id)
 
+    # Obuna xabarini (tugmalari bilan birga) o'chirib yuborish
     try:
         if callback.message:
-            await callback.message.delete()
-    except Exception:
-        pass
+            await bot.delete_message(chat_id=callback.message.chat.id, message_id=callback.message.message_id)
+    except Exception as e:
+        logger.debug(f"Obuna xabarini o'chirishda xatolik: {e}")
 
     user_repo = UserRepository(session)
     user = await user_repo.get_by_telegram_id(user_id)
