@@ -39,10 +39,22 @@ class RequiredChannelMiddleware(BaseMiddleware):
         if not user or not bot or not session:
             return await handler(event, data)
 
-        # /start buyrug'i va tekshirish tugmasiga ruxsat berish
-        if isinstance(real_event, Message) and real_event.text and real_event.text.startswith("/start"):
+        # Adminlarni va admin amallarini hech qachon bloklamaslik
+        from app.config import settings
+        auth_service = AuthService(session)
+        is_admin = (user.id == settings.OWNER_ID) or await auth_service.is_admin(user.id)
+        if is_admin:
             return await handler(event, data)
-        if isinstance(real_event, CallbackQuery) and real_event.data in ["check_channel_subs", "cancel"]:
+
+        # /start, /admin buyruqlari va tekshirish tugmalariga ruxsat berish
+        if isinstance(real_event, Message) and real_event.text and (real_event.text.startswith("/start") or real_event.text.startswith("/admin")):
+            return await handler(event, data)
+        if isinstance(real_event, CallbackQuery) and (
+            real_event.data == "check_channel_subs" 
+            or (real_event.data and real_event.data.startswith("check_channel_subs"))
+            or (real_event.data and real_event.data.startswith("adm_"))
+            or real_event.data in ["cancel", "noop"]
+        ):
             return await handler(event, data)
 
         # Majburiy kanallarga a'zolikni barcha foydalanuvchilar (shu jumladan adminlar) uchun har safar jonli tekshirish
