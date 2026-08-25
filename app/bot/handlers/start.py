@@ -509,21 +509,55 @@ async def check_channel_subs_callback(callback: CallbackQuery, state: FSMContext
 
     is_subbed, unsubs = await channel_service.check_user_subscriptions(bot, user_id)
     if not is_subbed and unsubs:
-        await callback.answer("❌ Hali hamma kanallarga a’zo bo‘lmadingiz!\nIltimos, avval barcha ko‘rsatilgan kanallarga obuna bo‘ling.", show_alert=True)
+        buttons = []
+        for ch in unsubs:
+            buttons.append([InlineKeyboardButton(text=f"📢 {ch.title}", url=ch.invite_link)])
+        buttons.append([
+            InlineKeyboardButton(text="✅ A'zo bo'ldim, tekshirish", callback_data="check_channel_subs")
+        ])
+        kb = InlineKeyboardMarkup(inline_keyboard=buttons)
+
+        await callback.answer("❌ Hali hamma kanallarga a’zo bo‘lmadingiz!", show_alert=True)
+        try:
+            if callback.message:
+                await callback.message.edit_text(
+                    "❌ <b>Siz hali quyidagi barcha kanallarga a'zo bo'lmadingiz:</b>\n\n"
+                    "Iltimos, pastdagi har bir kanalga a'zo bo'ling va so'ngra <b>✅ A'zo bo'ldim, tekshirish</b> tugmasini bosing:",
+                    reply_markup=kb,
+                    parse_mode="HTML"
+                )
+        except Exception:
+            pass
         return
 
     SubscriptionTracker.mark_subscribed(user_id)
     await callback.answer("✅ A’zoligingiz tasdiqlandi!")
 
     try:
-        await callback.message.delete()
+        if callback.message:
+            await callback.message.delete()
     except Exception:
         pass
 
-    await callback.message.answer(
-        f"✅ <b>A’zoligingiz muvaffaqiyatli tasdiqlandi!</b> 🎉\n\n"
-        f"👋 Xush kelibsiz, <b>{callback.from_user.first_name}</b>!\n\n"
-        "Quyidagi menyudan kerakli bo‘limni tanlang:",
-        reply_markup=get_student_main_keyboard(is_admin=is_admin),
-        parse_mode="HTML"
-    )
+    user_repo = UserRepository(session)
+    user = await user_repo.get_by_telegram_id(user_id)
+    if not user or not user.phone_number or not user.school:
+        await state.set_state(RegistrationState.waiting_for_name)
+        await bot.send_message(
+            chat_id=user_id,
+            text=f"✅ <b>A’zoligingiz muvaffaqiyatli tasdiqlandi!</b> 🎉\n\n"
+                 f"Assalomu alaykum, <b>{callback.from_user.first_name}</b>!\n"
+                 "Platformadan to'liq foydalanish uchun ro'yxatdan o'ting.\n\n"
+                 "Ism va familiyangizni kiriting:\n(Masalan: Ali Valiyev):",
+            reply_markup=get_cancel_keyboard(),
+            parse_mode="HTML"
+        )
+    else:
+        await bot.send_message(
+            chat_id=user_id,
+            text=f"✅ <b>A’zoligingiz muvaffaqiyatli tasdiqlandi!</b> 🎉\n\n"
+                 f"👋 Xush kelibsiz, <b>{callback.from_user.first_name}</b>!\n\n"
+                 "Quyidagi menyudan kerakli bo‘limni tanlang:",
+            reply_markup=get_student_main_keyboard(is_admin=is_admin),
+            parse_mode="HTML"
+        )

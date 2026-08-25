@@ -68,7 +68,7 @@ class RequiredChannelMiddleware(BaseMiddleware):
             elif isinstance(real_event, CallbackQuery):
                 await real_event.answer("⛔ Avval kanallarga a'zo bo'ling!", show_alert=True)
                 try:
-                    await real_event.message.answer(msg_text, reply_markup=kb, parse_mode="HTML")
+                    await bot.send_message(chat_id=user.id, text=msg_text, reply_markup=kb, parse_mode="HTML")
                 except Exception:
                     pass
             return
