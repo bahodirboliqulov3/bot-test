@@ -502,12 +502,6 @@ async def finish_registration(message: Message, state: FSMContext, phone: str, b
 
 @router.callback_query(F.data == "check_channel_subs")
 async def check_channel_subs_callback(callback: CallbackQuery, state: FSMContext, bot: Bot, session: AsyncSession):
-    # Instant answer to stop loading spinner immediately
-    try:
-        await callback.answer("⏳ Tekshirilmoqda...", show_alert=False)
-    except Exception:
-        pass
-
     user_id = callback.from_user.id
     channel_service = ChannelService(session)
     auth_service = AuthService(session)
@@ -520,27 +514,22 @@ async def check_channel_subs_callback(callback: CallbackQuery, state: FSMContext
         is_subbed, unsubs = await channel_service.check_user_subscriptions(bot, user_id)
 
     if not is_subbed and unsubs:
-        buttons = []
-        for ch in unsubs:
-            buttons.append([InlineKeyboardButton(text=f"📢 {ch.title}", url=ch.invite_link)])
-        buttons.append([
-            InlineKeyboardButton(text="✅ A'zo bo'ldim, tekshirish", callback_data="check_channel_subs")
-        ])
-        kb = InlineKeyboardMarkup(inline_keyboard=buttons)
-
+        unsub_names = ", ".join([f"'{ch.title}'" for ch in unsubs])
         try:
-            if callback.message:
-                await callback.message.edit_text(
-                    "❌ <b>Siz hali quyidagi barcha kanallarga a'zo bo'lmadingiz:</b>\n\n"
-                    "Iltimos, pastdagi har bir kanalga a'zo bo'ling va so'ngra <b>✅ A'zo bo'ldim, tekshirish</b> tugmasini bosing:",
-                    reply_markup=kb,
-                    parse_mode="HTML"
-                )
+            await callback.answer(
+                f"❌ Siz hali {unsub_names} kanaliga a’zo bo‘lmadingiz!\n\nIltimos, yuqoridagi kanal havolasiga o'tib, 'A'zo bo'lish' tugmasini bosing va so'ngra tekshiring.",
+                show_alert=True
+            )
         except Exception:
             pass
         return
 
-    # 1. A'zolik tasdiqlandi! Trackerga belgilash
+    # 1. A'zolik tasdiqlandi!
+    try:
+        await callback.answer("✅ A’zoligingiz tasdiqlandi!")
+    except Exception:
+        pass
+
     SubscriptionTracker.mark_subscribed(user_id)
 
     # 2. Obuna xabarini (tugmalari bilan birga) chatdan 100% o'chirib yuborish
