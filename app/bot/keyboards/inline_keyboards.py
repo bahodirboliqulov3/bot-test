@@ -7,7 +7,7 @@ def get_channel_subscription_keyboard(channels: list) -> InlineKeyboardMarkup:
     buttons = []
     for ch in channels:
         buttons.append([InlineKeyboardButton(text=f"📢 {ch.title}", url=ch.invite_link)])
-    buttons.append([InlineKeyboardButton(text="✅ Tekshirish", callback_data="check_channel_subs")])
+    buttons.append([InlineKeyboardButton(text="✅ A'zo bo'ldim, tekshirish", callback_data="check_channel_subs")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 

@@ -511,9 +511,14 @@ async def check_channel_subs_callback(callback: CallbackQuery, state: FSMContext
     user_id = callback.from_user.id
     channel_service = ChannelService(session)
     auth_service = AuthService(session)
-    is_admin = await auth_service.is_admin(user_id)
+    from app.config import settings
+    is_admin = (user_id == settings.OWNER_ID) or await auth_service.is_admin(user_id)
 
-    is_subbed, unsubs = await channel_service.check_user_subscriptions(bot, user_id)
+    is_subbed = True
+    unsubs = []
+    if not is_admin:
+        is_subbed, unsubs = await channel_service.check_user_subscriptions(bot, user_id)
+
     if not is_subbed and unsubs:
         buttons = []
         for ch in unsubs:
@@ -535,18 +540,25 @@ async def check_channel_subs_callback(callback: CallbackQuery, state: FSMContext
             pass
         return
 
+    # 1. A'zolik tasdiqlandi! Trackerga belgilash
     SubscriptionTracker.mark_subscribed(user_id)
 
-    # Obuna xabarini (tugmalari bilan birga) o'chirib yuborish
+    # 2. Obuna xabarini (tugmalari bilan birga) chatdan 100% o'chirib yuborish
     try:
         if callback.message:
-            await bot.delete_message(chat_id=callback.message.chat.id, message_id=callback.message.message_id)
-    except Exception as e:
-        logger.debug(f"Obuna xabarini o'chirishda xatolik: {e}")
+            await callback.message.delete()
+    except Exception:
+        try:
+            if callback.message:
+                await bot.delete_message(chat_id=callback.message.chat.id, message_id=callback.message.message_id)
+        except Exception:
+            pass
 
+    # 3. Keyingi bosqichga o'tkazish
     user_repo = UserRepository(session)
     user = await user_repo.get_by_telegram_id(user_id)
     if not user or not user.phone_number or not user.school:
+        # Ro'yxatdan o'tmagan bo'lsa -> Ro'yxatdan o'tish bosqichiga
         await state.set_state(RegistrationState.waiting_for_name)
         await bot.send_message(
             chat_id=user_id,
@@ -558,6 +570,7 @@ async def check_channel_subs_callback(callback: CallbackQuery, state: FSMContext
             parse_mode="HTML"
         )
     else:
+        # Ro'yxatdan o'tgan bo'lsa -> Asosiy menyu bosqichiga
         await state.clear()
         await bot.send_message(
             chat_id=user_id,
