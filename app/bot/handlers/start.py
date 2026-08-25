@@ -553,6 +553,7 @@ async def check_channel_subs_callback(callback: CallbackQuery, state: FSMContext
             parse_mode="HTML"
         )
     else:
+        await state.clear()
         await bot.send_message(
             chat_id=user_id,
             text=f"✅ <b>A’zoligingiz muvaffaqiyatli tasdiqlandi!</b> 🎉\n\n"
