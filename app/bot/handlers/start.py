@@ -502,6 +502,12 @@ async def finish_registration(message: Message, state: FSMContext, phone: str, b
 
 @router.callback_query(F.data == "check_channel_subs")
 async def check_channel_subs_callback(callback: CallbackQuery, state: FSMContext, bot: Bot, session: AsyncSession):
+    # Instant answer to stop loading spinner immediately
+    try:
+        await callback.answer("⏳ Tekshirilmoqda...", show_alert=False)
+    except Exception:
+        pass
+
     user_id = callback.from_user.id
     channel_service = ChannelService(session)
     auth_service = AuthService(session)
@@ -517,7 +523,6 @@ async def check_channel_subs_callback(callback: CallbackQuery, state: FSMContext
         ])
         kb = InlineKeyboardMarkup(inline_keyboard=buttons)
 
-        await callback.answer("❌ Hali hamma kanallarga a’zo bo‘lmadingiz!", show_alert=True)
         try:
             if callback.message:
                 await callback.message.edit_text(
@@ -531,7 +536,6 @@ async def check_channel_subs_callback(callback: CallbackQuery, state: FSMContext
         return
 
     SubscriptionTracker.mark_subscribed(user_id)
-    await callback.answer("✅ A’zoligingiz tasdiqlandi!")
 
     try:
         if callback.message:

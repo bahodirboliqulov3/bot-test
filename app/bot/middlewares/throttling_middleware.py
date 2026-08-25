@@ -18,6 +18,11 @@ class ThrottlingMiddleware(BaseMiddleware):
         event: TelegramObject,
         data: Dict[str, Any]
     ) -> Any:
+        from aiogram.types import Update
+        real_event = event
+        if isinstance(event, Update):
+            real_event = event.callback_query or event.message or event.chat_member or event.my_chat_member
+
         user = data.get("event_from_user")
         if not user:
             return await handler(event, data)
@@ -29,22 +34,21 @@ class ThrottlingMiddleware(BaseMiddleware):
         # If user exceeds rate limit (anti-flood trigger)
         if time_passed < self.rate_limit:
             last_warn = self.warning_timestamps.get(user.id, 0.0)
-            # Only warn once every `warning_cooldown` seconds to avoid spamming the user
             if now - last_warn > self.warning_cooldown:
                 self.warning_timestamps[user.id] = now
-                if isinstance(event, CallbackQuery):
+                if isinstance(real_event, CallbackQuery):
                     try:
-                        await event.answer("⚠️ Iltimos, shoshilmang! Tugmalarni ketma-ket juda tez bosmang.", show_alert=False)
+                        await real_event.answer("⚠️ Iltimos, shoshilmang! Tugmalarni ketma-ket juda tez bosmang.", show_alert=False)
                     except Exception:
                         pass
-                elif isinstance(event, Message):
+                elif isinstance(real_event, Message):
                     try:
-                        await event.answer("⚠️ <b>Iltimos, shoshilmang!</b> Buyruqlarni ketma-ket juda tez yubormang.", parse_mode="HTML")
+                        await real_event.answer("⚠️ <b>Iltimos, shoshilmang!</b> Buyruqlarni ketma-ket juda tez yubormang.", parse_mode="HTML")
                     except Exception:
                         pass
-            elif isinstance(event, CallbackQuery):
+            elif isinstance(real_event, CallbackQuery):
                 try:
-                    await event.answer()
+                    await real_event.answer()
                 except Exception:
                     pass
             return
