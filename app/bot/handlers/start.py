@@ -509,11 +509,11 @@ async def check_channel_subs_callback(callback: CallbackQuery, state: FSMContext
 
     is_subbed, unsubs = await channel_service.check_user_subscriptions(bot, user_id)
     if not is_subbed and unsubs:
-        await callback.answer("❌ Hali hamma kanallarga a’zo bo‘lmadingiz!\nIltimos, avval kanallarga obuna bo‘ling.", show_alert=True)
+        await callback.answer("❌ Hali hamma kanallarga a’zo bo‘lmadingiz!\nIltimos, avval barcha ko‘rsatilgan kanallarga obuna bo‘ling.", show_alert=True)
         return
 
     SubscriptionTracker.mark_subscribed(user_id)
-    await callback.answer("✅ Obunangiz muvaffaqiyatli tasdiqlandi!")
+    await callback.answer("✅ A’zoligingiz tasdiqlandi!")
 
     try:
         await callback.message.delete()
@@ -521,7 +521,8 @@ async def check_channel_subs_callback(callback: CallbackQuery, state: FSMContext
         pass
 
     await callback.message.answer(
-        f"👋 Xush kelibsiz, {callback.from_user.first_name}!\n\n"
+        f"✅ <b>A’zoligingiz muvaffaqiyatli tasdiqlandi!</b> 🎉\n\n"
+        f"👋 Xush kelibsiz, <b>{callback.from_user.first_name}</b>!\n\n"
         "Quyidagi menyudan kerakli bo‘limni tanlang:",
         reply_markup=get_student_main_keyboard(is_admin=is_admin),
         parse_mode="HTML"
