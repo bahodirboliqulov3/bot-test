@@ -19,7 +19,7 @@ def get_guide_keyboard() -> InlineKeyboardMarkup:
                 InlineKeyboardButton(text="⚡ Javob tekshirish (Bosqichma-bosqich)", callback_data="faq:quick_check")
             ],
             [
-                InlineKeyboardButton(text="🔢 Raqamli & Kasrli testlar", callback_data="faq:sat")
+                InlineKeyboardButton(text="🔢 Raqamli & Kasrli testlar", callback_data="faq:numeric")
             ],
             [
                 InlineKeyboardButton(text="🏆 Reyting va Ballar tizimi", callback_data="faq:rating")
@@ -89,7 +89,7 @@ async def faq_quick_check(callback: CallbackQuery):
     await callback.message.edit_text(text, reply_markup=kb, parse_mode="HTML")
 
 
-@router.callback_query(F.data == "faq:sat")
+@router.callback_query(F.data == "faq:numeric")
 async def faq_sat(callback: CallbackQuery):
     await callback.answer()
     text = (
