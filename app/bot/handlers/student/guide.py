@@ -19,7 +19,7 @@ def get_guide_keyboard() -> InlineKeyboardMarkup:
                 InlineKeyboardButton(text="⚡ Javob tekshirish (Bosqichma-bosqich)", callback_data="faq:quick_check")
             ],
             [
-                InlineKeyboardButton(text="🔢 SAT & Yopiq javobli testlar", callback_data="faq:sat")
+                InlineKeyboardButton(text="🔢 Raqamli & Kasrli testlar", callback_data="faq:sat")
             ],
             [
                 InlineKeyboardButton(text="🏆 Reyting va Ballar tizimi", callback_data="faq:rating")
@@ -93,7 +93,7 @@ async def faq_quick_check(callback: CallbackQuery):
 async def faq_sat(callback: CallbackQuery):
     await callback.answer()
     text = (
-        "🔢 <b>SAT, Raqamli va Kasrli savollar qanday ishlaydi?</b>\n\n"
+        "🔢 <b>Raqamli va Kasrli savollar qanday ishlaydi?</b>\n\n"
         "Botimizda nafaqat <code>A, B, C, D</code> variantli, balki <b>yopiq / ochiq raqamli va kasrli</b> savollar ham qabul qilinadi!\n\n"
         "📌 <b>Kiritish qoidalari:</b>\n"
         "• <b>Kasrlar:</b> <code>3/4</code> deb yozsangiz ham, <code>0.75</code> deb yozsangiz ham to‘g‘ri hisoblanadi!\n"
@@ -125,7 +125,7 @@ async def faq_teacher(callback: CallbackQuery):
         "👨‍🏫 <b>O‘qituvchilar va Repetitorlar uchun:</b>\n\n"
         "• <b>➕ Yangi test:</b> 20 soniyada yangi test yaratasiz (Nomi → Kod → Kalitlar → Vaqt).\n"
         "• <b>📎 Test fayli:</b> Botga fayl yuklash shart emas — PDF yoki test rasmini to‘g‘ridan-to‘g‘ri o‘z kanalingizga tashlaysiz. Bot faqat javoblarni tekshirib beradi.\n"
-        "• <b>🔢 SAT va barcha formatlar:</b> Raqamli, kasrli (<code>0.75</code>, <code>3/4</code>) va variantli (<code>A,B,C,D</code>) barcha kalitlarni qabul qiladi.\n"
+        "• <b>🔢 Raqamli va barcha formatlar:</b> Raqamli, kasrli (<code>0.75</code>, <code>3/4</code>) va variantli (<code>A,B,C,D</code>) barcha kalitlarni qabul qiladi.\n"
         "• <b>📊 Excel hisoboti:</b> Test tugagach, to‘liq o‘quvchilar tahlili va natijalari matritsasini Excel formatida yuklab olasiz! 📈"
     )
     kb = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="◀️ Barcha savollar", callback_data="faq:menu")]])
