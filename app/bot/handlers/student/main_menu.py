@@ -443,6 +443,8 @@ async def process_profile_new_phone(message: Message, state: FSMContext, session
 @router.callback_query(F.data == "prof_restart_reg")
 async def prof_restart_registration_callback(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
+    await state.clear()
+
     raw_fn = callback.from_user.first_name or "Foydalanuvchi"
     raw_ln = callback.from_user.last_name or ""
     tg_name = f"{raw_fn} {raw_ln}".strip() or "Foydalanuvchi"
@@ -457,11 +459,19 @@ async def prof_restart_registration_callback(callback: CallbackQuery, state: FSM
     )
 
     safe_tg_name = html.escape(tg_name)
+    onboard_msg = (
+        "🔄 <b>Qayta ro‘yxatdan o‘tish:</b>\n\n"
+        "╔══════════════════════╗\n"
+        "║  🎯  TEST PLATFORMASI  ║\n"
+        "╚══════════════════════╝\n\n"
+        "📋 Profilingiz ma'lumotlarini yangilaymiz:\n\n"
+        f"<b>1️⃣ / 4</b>  ━━━━━░░░░░░  <i>25%</i>\n\n"
+        f"🙋 Ismingiz <b>{safe_tg_name}</b> — to'g'rimi?"
+    )
+
     try:
-        await callback.message.edit_text(
-            f"🔄 Qayta ro‘yxatdan o‘tish:\n\n1️⃣ Ism-familiyangiz: {safe_tg_name} to‘g‘rimi?",
-            reply_markup=kb,
-            parse_mode="HTML"
-        )
+        await callback.message.delete()
     except Exception:
         pass
+
+    await callback.message.answer(onboard_msg, reply_markup=kb, parse_mode="HTML")
