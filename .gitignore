@@ -1,0 +1,32 @@
+# Byte-compiled
+__pycache__/
+*.py[cod]
+*.so
+.pytest_cache/
+
+# Environment variables (SECRET!)
+.env
+.venv
+venv/
+env/
+
+# Database and sensitive user data
+storage/*.db
+storage/*.db-shm
+storage/*.db-wal
+storage/backups/*
+!storage/backups/.gitkeep
+storage/exports/*
+!storage/exports/.gitkeep
+storage/data/*.json
+!storage/data/.gitkeep
+storage/logs/*
+!storage/logs/.gitkeep
+storage/uploads/*
+!storage/uploads/.gitkeep
+storage/certificates/*
+!storage/certificates/.gitkeep
+
+# IDEs
+.vscode/
+.idea/
