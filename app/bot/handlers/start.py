@@ -119,7 +119,7 @@ async def start_command(message: Message, command: CommandObject, state: FSMCont
                 f"2️⃣ <b>Endi javoblaringizni yuboring:</b>\n\n"
                 f"📌 <b>Formatlar:</b>\n"
                 f"• <code>ABCDABCD...</code> (variantli testlar)\n"
-                f"• <code>1.A 2.B 3.12 4.3/4 5.C</code> (SAT / raqamli javoblar)\n"
+                f"• <code>1.A 2.B 3.12 4.3/4 5.C</code> (raqamli va kasrli javoblar)\n"
                 f"• <code>A, B, 12, 3/4, C</code>"
             )
 
