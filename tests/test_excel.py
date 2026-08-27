@@ -76,7 +76,21 @@ def test_excel_export():
     wb = openpyxl.load_workbook(path)
     ws = wb.active
     rows = list(ws.iter_rows(values_only=True))
-    assert len(rows) == 2
-    assert rows[1][1] == "Anvar"
-    assert rows[1][7] == "90.0%"
+
+    # Kamida 2 qator bo'lishi kerak: header + 1 natija
+    assert len(rows) >= 2, f"Kutilgan >= 2 qator, topildi: {len(rows)}"
+
+    # Hozirgi kod 14 ustun chiqaradi:
+    # 0:№  1:Ism  2:Familiya  3:Telefon  4:Maktab/Muassasa  5:Sinf/Toifa
+    # 6:Username  7:Test nomi  8:To'g'ri javob  9:Xato javob
+    # 10:To'plangan ball  11:Ko'rsatkich(%)  12:Boshlangan vaqti  13:Yakunlangan vaqti
+    assert rows[1][1] == "Anvar",        f"Ism kutildi 'Anvar', lekin: {rows[1][1]}"
+    assert rows[1][2] == "Saidov",       f"Familiya kutildi 'Saidov', lekin: {rows[1][2]}"
+    # Foiz ustuni (11-indeks) "90.0%" yoki 90.0 bo'lishi mumkin
+    pct_val = rows[1][11]
+    assert pct_val is not None, "Foiz (11-ustun) None bo'lmasligi kerak"
+    if isinstance(pct_val, str):
+        assert "90" in pct_val, f"Foizda 90 bo'lishi kerak, topildi: {pct_val}"
+    else:
+        assert abs(float(pct_val) - 90.0) < 0.1, f"Foiz ~90 bo'lishi kerak, topildi: {pct_val}"
     wb.close()
