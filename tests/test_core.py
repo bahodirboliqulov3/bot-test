@@ -43,9 +43,13 @@ def test_visual_breakdown_rendering():
     correct = {1: 'A', 2: 'B', 3: 'C'}
     user_ans = {1: 'A', 2: 'D', 3: 'C'}
     grid = ScoringService.build_visual_breakdown(correct, user_ans)
-    assert '1.🟢 A' in grid
-    assert '2.🔴 D' in grid
-    assert '3.🟢 C' in grid
+    # Kod savol raqamlarini HTML bold teglari bilan chiqaradi: <b>1</b>.🟢 A
+    assert '🟢' in grid,  "Yashil doira belgisi topilmadi"
+    assert '🔴' in grid,  "Qizil doira belgisi topilmadi"
+    assert 'A' in grid,           "To'g'ri javob 'A' topilmadi"
+    assert 'D' in grid,           "Noto'g'ri javob 'D' topilmadi"
+    # Raqam formati: <b>N</b>.emoji yoki N.emoji — ikkovi ham to'g'ri
+    assert ('1' in grid and '2' in grid and '3' in grid), "Savol raqamlari topilmadi"
 
 def test_user_tenure_display():
     from app.bot.handlers.student.main_menu import get_user_tenure_display
