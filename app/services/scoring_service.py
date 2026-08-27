@@ -150,7 +150,7 @@ class ScoringService:
         # 1. Separators: space, *, #, :, -, /, comma, semicolon
         # e.g. '101*ABCD', '101 # ABCD', '101 ABCD', 'TEST-101: ABCD', 'TEST-A8F2K a,b,c,0.75'
         m = re.match(
-            r"^(TEST-[A-Za-z0-9_\-]+|SAT-[A-Za-z0-9_\-]+|[A-Za-z0-9_\-]{2,24})[\s*#:;,\-_/]+([A-Za-z0-9\s\-:.,/=;|\(\)\[\]\+‘`\'’]+)$",
+            r"^(TEST-[A-Za-z0-9_\-]+|[A-Za-z0-9_\-]{2,24})[\s*#:;,\-_/]+([A-Za-z0-9\s\-:.,/=;|\(\)\[\]\+‘`\'’]+)$",
             t
         )
         if m:
@@ -334,7 +334,7 @@ class ScoringService:
         max_possible_score = sum(tq.question.points for tq in test.test_questions) if test.test_questions else test.max_points
 
         # Penalty factor: how many points to deduct per wrong answer
-        # 0.0 = no penalty, 0.25 = SAT style (-0.25 per wrong), 1.0 = full point deducted
+        # 0.0 = no penalty, 0.25 = Penalty (-0.25 per wrong), 1.0 = full point deducted
         penalty_factor = getattr(test, 'penalty_per_wrong', 0.0) or 0.0
 
         for tq in test.test_questions:
