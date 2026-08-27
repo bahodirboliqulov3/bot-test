@@ -9,6 +9,7 @@ from app.bot.handlers.student.tests_list import send_test_to_student
 from app.bot.keyboards.inline_keyboards import get_channel_subscription_keyboard
 from app.bot.keyboards.reply_keyboards import get_cancel_keyboard, get_step_back_keyboard, get_student_main_keyboard
 from app.bot.states.registration_state import RegistrationState
+from app.bot.storage.subscription_tracker import SubscriptionTracker
 from app.database.repositories.test_repo import TestRepository
 from app.database.repositories.user_repo import UserRepository
 from app.services.auth_service import AuthService
