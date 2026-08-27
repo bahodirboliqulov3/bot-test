@@ -78,7 +78,7 @@ class Test(Base, TimestampMixin):
     shuffle_options: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     allow_backtracking: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
-    # Penalty scoring: 0.0 = no penalty, 0.25 = SAT (-0.25 per wrong), 1.0 = full point deducted
+    # Penalty scoring: 0.0 = no penalty, 0.25 = Penalty (-0.25 per wrong), 1.0 = full point deducted
     penalty_per_wrong: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     
     status: Mapped[TestStatus] = mapped_column(
