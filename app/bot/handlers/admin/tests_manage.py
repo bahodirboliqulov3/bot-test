@@ -1,6 +1,9 @@
 import html
+import logging
 from datetime import datetime, timedelta, timezone
 from aiogram import Bot, F, Router
+
+logger = logging.getLogger(__name__)
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, FSInputFile, InlineKeyboardButton, InlineKeyboardMarkup, Message
@@ -266,6 +269,7 @@ async def send_results_to_channel(callback: CallbackQuery, bot: Bot, session: As
         await bot.send_message(chat_id=chat_id, text=leaderboard_text, parse_mode="HTML")
         await callback.answer("✅ Natijalar kanalga muvaffaqiyatli e'lon qilindi!", show_alert=True)
     except Exception as e:
+        logger.error(f"Failed to send leaderboard: {e}", exc_info=True)
         await callback.answer(f"❌ Xatolik: Bot ushbu kanalda admin bo'lishi kerak.", show_alert=True)
 
 
