@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import html
 import logging
 import urllib.parse
@@ -344,3 +344,53 @@ async def show_test_result(message: Message, result, session: AsyncSession, visu
     )
 
     await message.answer(result_text, reply_markup=kb, parse_mode="HTML")
+
+    # Adminga va Test muallifiga darhol jonli xabar (Live notification)
+    try:
+        from app.config import settings
+        user_repo = UserRepository(session)
+        user = await user_repo.get_by_id(result.user_id)
+
+        target_admin_ids = set()
+        if settings.OWNER_ID:
+            target_admin_ids.add(settings.OWNER_ID)
+
+        if test and test.author_id:
+            author = await user_repo.get_by_id(test.author_id)
+            if author and author.telegram_id:
+                target_admin_ids.add(author.telegram_id)
+
+        student_tg_id = user.telegram_id if user else (message.from_user.id if message.from_user else None)
+        user_name = html.escape(user.full_name or "O‘quvchi") if user else "O‘quvchi"
+        username_str = f" (@{html.escape(user.username)})" if (user and user.username) else ""
+        phone_str = f"<code>{html.escape(user.phone_number)}</code>" if (user and user.phone_number) else "Kiritilmagan"
+        school_str = html.escape(user.school) if (user and user.school) else "Kiritilmagan"
+        grade_str = html.escape(user.grade) if (user and user.grade) else ""
+
+        uzb_now = datetime.now(timezone(timedelta(hours=5))).strftime("%d.%m.%Y %H:%M")
+
+        admin_notif_text = (
+            f"🔔 <b>Yangi test natijasi!</b>\n\n"
+            f"📝 <b>Test:</b> {test_title}\n"
+            f"🔑 <b>Kodi:</b> <code>{safe_code}</code>\n\n"
+            f"👤 <b>O‘quvchi:</b> <b>{user_name}</b>{username_str}\n"
+            f"📞 <b>Telefon:</b> {phone_str}\n"
+            f"🏫 <b>Muassasa:</b> {school_str} {('• ' + grade_str) if grade_str else ''}\n\n"
+            f"📊 <b>Natija:</b> {progress_bar} <b>{result.percentage}%</b>\n"
+            f"✅ <b>To‘g‘ri:</b> {result.correct_count} ta  |  ❌ <b>Xato:</b> {result.incorrect_count} ta\n"
+            f"⚪ <b>Belgilanmagan:</b> {result.unanswered_count} ta\n"
+            f"🏆 <b>Ball:</b> {result.total_score} / {result.max_score} ({rank}-o‘rin)\n"
+            f"⏱ <b>Sarflangan vaqt:</b> {minutes:02d}:{seconds:02d}\n"
+            f"📅 <b>Vaqt:</b> {uzb_now}"
+        )
+
+        bot = message.bot
+        if bot:
+            for admin_id in target_admin_ids:
+                if admin_id != student_tg_id:
+                    try:
+                        await bot.send_message(chat_id=admin_id, text=admin_notif_text, parse_mode="HTML")
+                    except Exception as e_adm:
+                        logger.warning(f"Adminga ({admin_id}) natija yuborishda xatolik: {e_adm}")
+    except Exception as e_all:
+        logger.error(f"Live admin notification xatoligi: {e_all}")
