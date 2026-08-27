@@ -234,7 +234,7 @@ async def fast_test_creator_command(message: Message, session: AsyncSession):
     await message.answer(preview, parse_mode="HTML")
 
 
-@router.message(F.text.in_(["🔑 Tezkor kalit qo‘shish", "🔑 Tezkor kalit qoshish", "🔑 Kalit qo‘shish", "🔑 Kalit qoshish", "/quick_key", "/sat_key", "🔢 SAT Kalit qo‘shish"]))
+@router.message(F.text.in_(["🔑 Tezkor kalit qo‘shish", "🔑 Tezkor kalit qoshish", "🔑 Kalit qo‘shish", "🔑 Kalit qoshish", "/quick_key"]))
 async def open_quick_key_creator_handler(message: Message, state: FSMContext):
     await state.set_state(AdminQuickKeyState.waiting_for_keys)
     await message.answer(
@@ -408,13 +408,13 @@ async def process_quick_time_limit_text(message: Message, state: FSMContext):
 
 # 1. Start Test Creation: Nomini kiritish
 # 1. Start Test Creation: Nomini kiritish
-@router.message(F.text.in_(["➕ Yangi test yaratish", "➕ Yangi test", "➕ Test yaratish", "/create_test", "/yangi_test", "📐 SAT Test qo‘shish"]))
+@router.message(F.text.in_(["➕ Yangi test yaratish", "➕ Yangi test", "➕ Test yaratish", "/create_test", "/yangi_test"]))
 async def start_admin_create_test(message: Message, state: FSMContext):
     await state.set_state(AdminCreateTestState.waiting_for_title)
     await message.answer(
         "➕ <b>Yangi Test Yaratish</b>\n\n"
         "1️⃣ <b>Test nomini kiriting:</b>\n"
-        "(Masalan: <code>Matematika 10-sinf ChSB</code> yoki <code>SAT Practice Test #1</code>)",
+        "(Masalan: <code>Matematika 10-sinf ChSB</code> yoki <code>PIMA Matematika 5-sinf</code>)",
         reply_markup=get_cancel_keyboard(),
         parse_mode="HTML"
     )
@@ -447,7 +447,7 @@ async def process_test_title(message: Message, state: FSMContext):
 
     await message.answer(
         "2️⃣ <b>Test kodini kiriting:</b>\n"
-        "(Masalan: <code>101</code>, <code>MATEM-9</code>, <code>SAT-01</code>)\n\n"
+        "(Masalan: <code>101</code>, <code>MATEM-9</code>, <code>MATEM-5</code>)\n\n"
         "Yoki avtomatik kod olish uchun tugmani bosing:",
         reply_markup=kb,
         parse_mode="HTML"
@@ -467,7 +467,7 @@ async def auto_code_callback(callback: CallbackQuery, state: FSMContext):
         "📌 <b>Kiritish namunalari:</b>\n"
         "• <code>a,b,c,0.75</code> <i>(nomersiz, vergul bilan)</i>\n"
         "• <code>ABCDABCD...</code> <i>(ketma-ket harflar)</i>\n"
-        "• <code>1.A 2.B 3.12 4.3/4 5.0.75</code> <i>(SAT / kasr / raqam)</i>",
+        "• <code>1.A 2.B 3.12 4.3/4 5.0.75</code> <i>(kasr / raqamli javoblar)</i>",
         reply_markup=get_cancel_keyboard(),
         parse_mode="HTML"
     )
@@ -490,7 +490,7 @@ async def process_custom_code(message: Message, state: FSMContext):
         "📌 <b>Kiritish namunalari:</b>\n"
         "• <code>a,b,c,0.75</code> <i>(nomersiz, vergul bilan)</i>\n"
         "• <code>ABCDABCD...</code> <i>(ketma-ket harflar)</i>\n"
-        "• <code>1.A 2.B 3.12 4.3/4 5.0.75</code> <i>(SAT / kasr / raqam)</i>",
+        "• <code>1.A 2.B 3.12 4.3/4 5.0.75</code> <i>(kasr / raqamli javoblar)</i>",
         reply_markup=get_cancel_keyboard(),
         parse_mode="HTML"
     )
