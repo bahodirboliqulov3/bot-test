@@ -257,9 +257,22 @@ async def backup_database_callback(event: Message | CallbackQuery):
     else:
         target_msg = event
 
-    db_file = Path("storage/test_platform.db")
-    if not db_file.exists():
-        for alt in [Path("test_platform.db"), Path("storage/data/test_platform.db")]:
+    # Dinamik DB faylini aniqlash (1-bot va 2-bot uchun universal)
+    db_file = None
+    if settings.DATABASE_URL and "sqlite" in settings.DATABASE_URL:
+        raw_p = settings.DATABASE_URL.split("///")[-1].lstrip("./")
+        candidate = Path(raw_p)
+        if candidate.exists():
+            db_file = candidate
+
+    if not db_file or not db_file.exists():
+        for alt in [
+            Path("storage/asilbekmath.db"),
+            Path("storage/test_platform.db"),
+            Path("asilbekmath.db"),
+            Path("test_platform.db"),
+            Path("storage/data/test_platform.db"),
+        ]:
             if alt.exists():
                 db_file = alt
                 break
@@ -288,7 +301,7 @@ async def backup_database_callback(event: Message | CallbackQuery):
     file_size_kb = round(backup_path.stat().st_size / 1024, 1)
 
     await target_msg.answer_document(
-        document=FSInputFile(path=str(backup_path), filename=f"backup_test_platform_{timestamp}.db"),
+        document=FSInputFile(path=str(backup_path), filename=f"backup_{db_file.stem}_{timestamp}.db"),
         caption=(
             f"💾 <b>Ma'lumotlar bazasi zaxira nusxasi (Backup)</b>\n\n"
             f"📅 <b>Vaqt:</b> {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}\n"
